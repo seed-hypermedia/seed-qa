@@ -13,7 +13,8 @@ test.afterAll(async () => {
 
 test("onboarding screen appears on fresh launch", async () => {
   await ctx.page.waitForTimeout(3000);
-  await ctx.page.screenshot({ path: "reports/onboarding-initial.png" });
+  // Screenshot is best-effort (may fail on headless displays)
+  await ctx.page.screenshot({ path: "reports/onboarding-initial.png" }).catch(() => {});
   const hasOnboarding = await ctx.page
     .locator('text=/create|new|account|welcome|get started|recovery/i')
     .first()

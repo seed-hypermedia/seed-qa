@@ -22,9 +22,13 @@ test("main window has correct title", async () => {
 });
 
 test("main window has reasonable size", async () => {
-  const { width, height } = ctx.page.viewportSize() || { width: 0, height: 0 };
-  expect(width).toBeGreaterThan(400);
-  expect(height).toBeGreaterThan(300);
+  // Use Electron's native API — works regardless of display/xvfb state
+  const bounds = await ctx.app.evaluate(async ({ BrowserWindow }) => {
+    const win = BrowserWindow.getAllWindows()[0];
+    return win ? win.getBounds() : { width: 0, height: 0 };
+  });
+  expect(bounds.width).toBeGreaterThan(400);
+  expect(bounds.height).toBeGreaterThan(300);
 });
 
 test("no crash dialogs or error overlays", async () => {
