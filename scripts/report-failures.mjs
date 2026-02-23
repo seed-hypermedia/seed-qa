@@ -58,7 +58,9 @@ if (failures.length === 0) {
 console.log(`❌ ${failures.length} failure(s)...`);
 mkdirSync(join(ROOT, "reports", "issues"), { recursive: true });
 
-const BASH = "C:\\Program Files\\Git\\bin\\bash.exe";
+// Use platform-appropriate shell for .sh scripts
+const IS_WINDOWS = process.platform === "win32";
+const BASH = IS_WINDOWS ? "bash" : "/bin/bash"; // bash via Git for Windows on Win, system bash on Linux
 
 for (const fail of failures) {
   const title = `[QA/${os}] ${fail.name}`;
