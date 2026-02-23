@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "version": "2026.2.6-dev.3",
+    "platform": "linux",
+    "startedAt": "2026-02-23T20:47:19.259Z",
+    "finishedAt": "2026-02-23T20:47:25.772Z",
+    "desktop": {
+      "passed": 0,
+      "failed": 0,
+      "total": 0,
+      "skipped": 0
+    },
+    "web": {
+      "chrome": {
+        "passed": 0,
+        "failed": 0,
+        "total": 0
+      },
+      "firefox": {
+        "passed": 0,
+        "failed": 0,
+        "total": 0
+      }
+    },
+    "issues": {
+      "filed": 0,
+      "closed": 0,
+      "urls": []
+    },
+    "prs": []
+  }
+]

@@ -180,6 +180,18 @@ async function main() {
     if (changed.length) console.log(`[sync]    ${changed.join(", ")}`);
   }
 
+  // ── Ensure node_modules is present (gitignored — must install after clone/sync) ──
+  const nmOk = existsSync(join(ROOT, "node_modules", "@playwright", "test"));
+  if (!nmOk) {
+    console.log("[sync] 📦 node_modules missing — running npm install...");
+    const install = run("npm install");
+    if (install.status !== 0) {
+      console.warn("[sync] ⚠️ npm install failed:", install.stderr);
+    } else {
+      console.log("[sync] ✅ npm install complete");
+    }
+  }
+
   // ── Step 2: parse SPECS.md and generate missing tests ────────────────────
   const specsPath = join(ROOT, "SPECS.md");
   const specs = parseSpecs(specsPath);
