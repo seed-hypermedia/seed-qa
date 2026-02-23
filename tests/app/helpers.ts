@@ -1,11 +1,10 @@
 import { _electron as electron } from "playwright";
-import { join, dirname } from "path";
-import { fileURLToPath } from "url";
+import { join } from "path";
 import { readFileSync, existsSync } from "fs";
 import type { ElectronApplication, Page } from "playwright";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const META_PATH = join(__dirname, "..", "..", "builds", "current.json");
+// Use process.cwd() — Playwright always runs from the project root
+const META_PATH = join(process.cwd(), "builds", "current.json");
 
 export interface AppContext {
   app: ElectronApplication;
