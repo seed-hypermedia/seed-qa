@@ -1,0 +1,16 @@
+node_modules/
+dist/
+builds/
+reports/html/
+reports/runs/
+reports/issues/
+reports/web-results.json
+reports/results.json
+reports/auto-fix-log.json
+test-results/
+playwright-report/
+*.log
+
+# Keep placeholder files
+!reports/last-tested.json
+!reports/index.json

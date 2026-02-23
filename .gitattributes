@@ -1,0 +1,11 @@
+# Default: normalize line endings on commit
+* text=auto
+
+# Shell scripts must always use LF
+*.sh text eol=lf
+
+# JS/TS: normalize
+*.ts text eol=lf
+*.mjs text eol=lf
+*.json text eol=lf
+*.md text eol=lf

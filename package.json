@@ -1,0 +1,27 @@
+{
+  "name": "seed-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Seed Hypermedia - QA Testing",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "download": "node scripts/download-build.mjs",
+    "smoke": "node scripts/run-smoke.mjs",
+    "web": "npx playwright test --config playwright.web.config.ts",
+    "web:headed": "npx playwright test --config playwright.web.config.ts --headed",
+    "report": "npx playwright show-report",
+    "report-failures": "node scripts/report-failures.mjs",
+    "verify-fixes": "bash scripts/verify-fixes.sh",
+    "check-notifications": "bash scripts/check-notifications.sh",
+    "full-run": "node scripts/full-run.mjs",
+    "check-release": "node scripts/check-new-release.mjs",
+    "discord-notify": "node scripts/discord-notify.mjs",
+    "auto-fix": "node scripts/auto-fix.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
