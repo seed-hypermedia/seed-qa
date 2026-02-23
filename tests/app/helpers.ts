@@ -33,12 +33,28 @@ export async function launchApp(): Promise<AppContext> {
 
   const app = await electron.launch({
     executablePath,
-    // Give the app 30s to start before timing out
     timeout: 30_000,
   });
 
-  const page = await app.firstWindow();
+  // firstWindow() may return a utility window (e.g. Find-in-Page).
+  // Wait up to 10s for a window that isn't a known helper.
+  let page = await app.firstWindow();
   await page.waitForLoadState("domcontentloaded").catch(() => {});
+
+  const HELPER_PATTERNS = [/find[_-]?in[_-]?page/i, /find\.html/i, /splash/i];
+  const isHelper = (url: string) => HELPER_PATTERNS.some((p) => p.test(url));
+
+  if (isHelper(page.url())) {
+    // Wait for the real main window (up to 15s)
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline) {
+      const wins = app.windows();
+      const main = wins.find((w) => !isHelper(w.url()));
+      if (main) { page = main; break; }
+      await new Promise((r) => setTimeout(r, 500));
+    }
+    await page.waitForLoadState("domcontentloaded").catch(() => {});
+  }
 
   return { app, page };
 }
