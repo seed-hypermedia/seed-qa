@@ -211,12 +211,16 @@ async function main() {
 
   const tier1Path = join(ROOT, "tests", "web", "tier1-critical.test.ts");
   const tier2Path = join(ROOT, "tests", "web", "tier2-important.test.ts");
-  const desktopPath = join(ROOT, "tests", "app", "app-launch.test.ts");
+  const desktopLaunchPath = join(ROOT, "tests", "app", "app-launch.test.ts");
+  const desktopNavPath = join(ROOT, "tests", "app", "navigation.test.ts");
+  const desktopOnboardPath = join(ROOT, "tests", "app", "onboarding.test.ts");
 
   const implemented = new Set([
     ...getImplementedIds(tier1Path),
     ...getImplementedIds(tier2Path),
-    ...getImplementedIds(desktopPath),
+    ...getImplementedIds(desktopLaunchPath),
+    ...getImplementedIds(desktopNavPath),
+    ...getImplementedIds(desktopOnboardPath),
   ]);
 
   const newSpecs = specs.filter(s => !implemented.has(s.id));
@@ -228,20 +232,29 @@ async function main() {
 
   console.log(`[sync] 🆕 ${newSpecs.length} new spec(s) to implement: ${newSpecs.map(s => s.id).join(", ")}`);
 
-  // Partition new specs into web tier1 (W1-xx), web tier2 (W2-xx), desktop (D-xx)
+  // Partition new specs by prefix → target file
   const newTier1 = newSpecs.filter(s => s.id.startsWith("W1-"));
   const newTier2 = newSpecs.filter(s => s.id.startsWith("W2-"));
-  const newOther = newSpecs.filter(s => !s.id.startsWith("W1-") && !s.id.startsWith("W2-"));
+  const newD1    = newSpecs.filter(s => s.id.startsWith("D1-"));
+  const newD2    = newSpecs.filter(s => s.id.startsWith("D2-"));
+  const newD3    = newSpecs.filter(s => s.id.startsWith("D3-"));
+  const newOther = newSpecs.filter(s =>
+    !s.id.startsWith("W1-") && !s.id.startsWith("W2-") &&
+    !s.id.startsWith("D1-") && !s.id.startsWith("D2-") && !s.id.startsWith("D3-")
+  );
 
   let committed = false;
 
   for (const [specs, filePath, label] of [
-    [newTier1, tier1Path, "tier1"],
-    [newTier2, tier2Path, "tier2"],
+    [newTier1, tier1Path,          "web tier1"],
+    [newTier2, tier2Path,          "web tier2"],
+    [newD1,    desktopLaunchPath,  "desktop app-launch"],
+    [newD2,    desktopNavPath,     "desktop navigation"],
+    [newD3,    desktopOnboardPath, "desktop onboarding"],
   ]) {
     if (specs.length === 0) continue;
     const stubs = specs.map(generateTestStub).join("\n");
-    // Append stubs before the closing }); of the describe block
+    // Append stubs before the closing }); of the describe block (or at end if none)
     const existing = readFileSync(filePath, "utf8");
     const insertBefore = existing.lastIndexOf("});");
     if (insertBefore === -1) {
@@ -265,7 +278,7 @@ async function main() {
     process.exit(0);
   }
 
-  const ids = newSpecs.filter(s => s.id.startsWith("W")).map(s => s.id).join(", ");
+  const ids = newSpecs.filter(s => s.id.match(/^[WD]/)).map(s => s.id).join(", ");
   const commitResult = run(`git commit -m "test: auto-generate stubs for ${ids} [sync-specs]"`);
   if (commitResult.status !== 0) {
     console.warn("[sync] Commit failed:", commitResult.stderr);

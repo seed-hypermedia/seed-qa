@@ -11,7 +11,7 @@ test.afterAll(async () => {
   await closeApp(ctx);
 });
 
-test("sidebar is visible after app loads", async () => {
+test("D2-01 sidebar is visible after app loads", async () => {
   await ctx.page.waitForTimeout(5000);
   // Screenshot is best-effort (may fail on headless displays)
   await ctx.page.screenshot({ path: "reports/navigation-loaded.png" }).catch(() => {});
@@ -20,7 +20,7 @@ test("sidebar is visible after app loads", async () => {
   if (!visible) test.skip(true, "App may be showing onboarding");
 });
 
-test("window controls are functional", async () => {
+test("D2-02 window controls are functional", async () => {
   // Use Electron's native BrowserWindow.getBounds() — reliable without a display server
   const bounds = await ctx.app.evaluate(async ({ BrowserWindow }) => {
     const win = BrowserWindow.getAllWindows()[0];

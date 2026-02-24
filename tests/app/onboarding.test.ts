@@ -11,7 +11,7 @@ test.afterAll(async () => {
   await closeApp(ctx);
 });
 
-test("app loads to a usable screen", async () => {
+test("D3-01 app loads to a usable screen", async () => {
   await ctx.page.waitForTimeout(3000);
   // Screenshot is best-effort (may fail on headless displays)
   await ctx.page.screenshot({ path: "reports/onboarding-initial.png" }).catch(() => {});
