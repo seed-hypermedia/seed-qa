@@ -1,6 +1,12 @@
 #!/usr/bin/env node
 import https from "https";
 import { URL } from "url";
+import { readFileSync, existsSync } from "fs";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SUMMARY_PATH = join(__dirname, "..", "reports", "summary.json");
 
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
@@ -11,7 +17,15 @@ if (!WEBHOOK_URL || WEBHOOK_URL === "PLACEHOLDER_SET_ME") {
 
 let summary;
 try {
-  summary = JSON.parse(process.argv[2] || "{}");
+  // Prefer reading from reports/summary.json (avoids shell quoting issues on Windows)
+  if (existsSync(SUMMARY_PATH)) {
+    summary = JSON.parse(readFileSync(SUMMARY_PATH, "utf-8"));
+  } else if (process.argv[2]) {
+    summary = JSON.parse(process.argv[2]);
+  } else {
+    console.error("No summary found (reports/summary.json missing and no argv[2])");
+    process.exit(0);
+  }
 } catch {
   console.error("Invalid summary JSON");
   process.exit(0);

@@ -145,15 +145,16 @@ async function main() {
     prs: prUrls,
     notes: [],
   };
-  const summaryJson = JSON.stringify(summary);
+  // Write summary to a file — avoids shell quoting nightmares on Windows cmd.exe
+  const SUMMARY_PATH = join(PROJECT_ROOT, "reports", "summary.json");
+  writeFileSync(SUMMARY_PATH, JSON.stringify(summary, null, 2));
+  log(`\n📄 Summary written to reports/summary.json`);
 
   header("💾 Saving report...");
-  runCmd(`node scripts/save-report.mjs "${summaryJson.replace(/"/g, '\\"')}"`);
+  runCmd("node scripts/save-report.mjs");
 
   header("📣 Discord...");
-  const discordWebhook = process.env.DISCORD_WEBHOOK_URL || "";
-  const discordSummary = JSON.stringify({ ...summary, discordWebhook: undefined });
-  runCmd(`node scripts/discord-notify.mjs "${discordSummary.replace(/"/g, '\\"')}"`);
+  runCmd("node scripts/discord-notify.mjs");
 
   writeFileSync(
     join(PROJECT_ROOT, "reports", "last-tested.json"),
