@@ -33,9 +33,10 @@ const onlyFirefox =
   (desktop.failed || 0) === 0 &&
   (web.chrome?.failed || 0) === 0;
 const statusEmoji = allPassed ? "✅" : onlyFirefox ? "⚠️" : "❌";
+const platformLabel = platform === "windows" || platform === "win32" ? "🪟 Windows" : platform === "linux" ? "🐧 Linux" : platform;
 
 const lines = [
-  `${statusEmoji} **Seed QA — v${version} (${platform})**`,
+  `${statusEmoji} **Seed QA — v${version} [${platformLabel}]**`,
   ``,
   `🖥️ Desktop: ${desktop.passed || 0}/${desktop.total || 0} | 🌐 Chrome: ${web.chrome?.passed || 0}/${web.chrome?.total || 0} | 🦊 Firefox: ${web.firefox?.passed || 0}/${web.firefox?.total || 0}`,
   ``,

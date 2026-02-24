@@ -162,7 +162,15 @@ async function main() {
 
   const before = (run("git rev-parse HEAD").stdout || "").trim();
   console.log("[sync] Pulling latest from seed-hypermedia/seed-qa...");
+
+  // Stash any local report changes (reports/ are generated locally, not committed upstream)
+  const stashResult = run("git stash -- reports/");
+  const didStash = (stashResult.stdout || "").includes("Saved");
+
   const pull = run("git pull origin main --ff-only");
+
+  // Restore stashed reports regardless of pull outcome
+  if (didStash) run("git stash pop");
 
   if (pull.status !== 0) {
     console.warn("[sync] ⚠️ Pull failed (will continue with existing files)");
