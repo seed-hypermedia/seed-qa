@@ -66,6 +66,46 @@ Tested after a 5-second wait to let the app settle.
 
 ---
 
+### Web — Comment URL Routing
+
+| ID | Description |
+|---|---|
+| WC-01 | Navigate to `/:comments` on a document with comments. The page must render a comments list in the main content area without any document content visible. |
+| WC-02 | Navigate to `/:comments` on the home document (root path). The comment editor must be visible above the comments list. |
+| WC-03 | Navigate to `/:comments/UID/TSID` where UID/TSID is a valid comment ID. The comments list must render in the main content area and the specified comment must be visually highlighted (e.g., `bg-accent` class). |
+| WC-04 | Navigate to `?panel=comments/UID/TSID` (no view term). The document content must render in the main area and a comments panel must be visible in the right sidebar with the specified comment highlighted. |
+| WC-05 | Navigate to `/:comments?panel=comments/UID/TSID`. The comments list must render in the main content area AND a comments panel must be visible in the right sidebar with the specified comment highlighted. |
+| WC-06 | Navigate to `/:discussions` (old URL format). The page must redirect or render the comments view identically to `/:comments` (backward compatibility). |
+| WC-07 | Navigate to `?panel=comment/UID/TSID` (old `comment/` prefix). The document must render in the main area with a comments panel in the right sidebar, same as `?panel=comments/UID/TSID` (backward compatibility). |
+| WC-08 | On the comments main view (`/:comments`), click the "Copy Comment Link" button on any comment. The clipboard must contain a URL with the comment ID in the path: `.../:comments/UID/TSID` (no `?panel=` query param). |
+| WC-09 | On a document with the comments right panel open (`?panel=comments/UID/TSID`), click the "Copy Comment Link" button on any comment. The clipboard must contain a URL with the comment ID in the query param: `...?panel=comments/UID/TSID` (no `:comments` view term in path). |
+| WC-10 | On the comments main view (`/:comments`), click the "Reply" button on a comment. The URL must update to `/:comments/UID/TSID` where UID/TSID is the comment being replied to, and the reply editor must be focused. |
+| WC-11 | On a document with comments in the right panel, click the "Reply" button on a comment. The URL must update to include `?panel=comments/UID/TSID` and the reply editor must be focused in the right panel. |
+| WC-12 | On a document with comments in the right panel, click on any block of the comment. The URL must update to include `?panel=comments/UID/TSID#BLOCK_ID+` where the BLOCK_ID is the actual block id for the block clicked. The `+` at the end should be there too (block expansion param). |
+| WC-13 | On the comments main view, click on any block of the comment. The URL must update to include `/:comments/UID/TSID#BLOCK_ID+` where the BLOCK_ID is the actual block id for the block clicked. The `+` at the end should be there too (block expansion param). |
+
+---
+
+### Desktop — Comment URL Routing
+
+| ID | Description |
+|---|---|
+| DC-01 | Paste a URL ending in `/:comments` into the omnibar and press Enter. The comments view must render in the main content area. |
+| DC-02 | Paste a URL ending in `/:comments/UID/TSID` into the omnibar and press Enter. The comments view must render in the main content area with the specified comment highlighted. |
+| DC-03 | Paste a URL with `?panel=comments/UID/TSID` (no view term) into the omnibar and press Enter. The document content must render in the main area and a comments panel must be visible in the right sidebar with the specified comment highlighted. |
+| DC-04 | Paste a URL ending in `/:comments?panel=comments/UID/TSID` into the omnibar and press Enter. The comments list must render in the main content area AND a comments panel must be visible in the right sidebar with the specified comment highlighted. |
+| DC-05 | On the comments main view, click the "Reply" button on a comment. The URL in the omnibar must update to show `/:comments/UID/TSID` and the reply editor must appear. |
+| DC-06 | On a document with comments in the right panel, click the "Reply" button. The URL in the omnibar must update to include `?panel=comments/UID/TSID` and the reply editor must appear in the right panel. |
+| DC-07 | On the comments main view, click the "Copy Comment Link" button. The clipboard URL must contain `/:comments/UID/TSID` in the path (not as a query param). |
+| DC-08 | On a document with comments in the right panel, click the "Copy Comment Link" button. The clipboard URL must contain `?panel=comments/UID/TSID` as a query param (no `:comments` view term in path). |
+| DC-09 | Paste a URL with the old `/:discussions` view term into the omnibar. The app must navigate to the comments view (backward compatibility). |
+| DC-10 | Paste a URL with the old `?panel=comment/UID/TSID` format (singular `comment/`) into the omnibar. The app must open the document with the comments right panel and highlighted comment (backward compatibility). |
+| DC-11 | Paste a URL ending in `/:comments/UID/TSID` into the titlebar URL field and press Enter. The comments view must render with the specified comment highlighted (same behavior as omnibar). |
+| DC-12 | On a document with comments in the right panel, click on any block of the comment. The URL must update to include `?panel=comments/UID/TSID#BLOCK_ID+` where the BLOCK_ID is the actual block id for the block clicked. The `+` at the end should be there too (block expansion param). |
+| DC-13 | On the comments main view, click on any block of the comment. The URL must update to include `/:comments/UID/TSID#BLOCK_ID+` where the BLOCK_ID is the actual block id for the block clicked. The `+` at the end should be there too (block expansion param). |
+
+---
+
 ## How to add a new test
 
 1. Add a row to the right table above with the next ID in sequence
