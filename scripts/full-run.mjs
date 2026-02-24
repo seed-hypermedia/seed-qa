@@ -109,7 +109,8 @@ async function main() {
   if (buildMeta?.version) version = buildMeta.version;
 
   header("🖥️ Running desktop tests...");
-  runCmd("npx playwright test --config playwright.config.ts --reporter=json,list 2>&1");
+  // No --reporter flag here: playwright.config.ts already configures json→reports/results.json + list
+  runCmd("npx playwright test --config playwright.config.ts 2>&1");
   const desktop = parseDesktopResults(loadJSON(join(PROJECT_ROOT, "reports", "results.json")));
   log(`\n🖥️ Desktop: ${desktop.passed}/${desktop.total} passed`);
 
