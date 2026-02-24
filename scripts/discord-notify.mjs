@@ -33,7 +33,7 @@ const onlyFirefox =
   (desktop.failed || 0) === 0 &&
   (web.chrome?.failed || 0) === 0;
 const statusEmoji = allPassed ? "✅" : onlyFirefox ? "⚠️" : "❌";
-const platformLabel = platform === "windows" || platform === "win32" ? "🪟 Windows" : platform === "linux" ? "🐧 Linux" : platform;
+const platformLabel = platform === "windows" || platform === "win32" ? "Windows" : platform === "linux" ? "Linux" : platform;
 
 const lines = [
   `${statusEmoji} **Seed QA — v${version} (${platformLabel})**`,

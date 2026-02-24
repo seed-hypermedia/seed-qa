@@ -146,7 +146,7 @@ async function main() {
   console.log(`[download] Downloading ${filename}...`);
   await download(downloadUrl, dest);
 
-  // ── Extract .deb (Linux, no sudo needed) ──────────────────────────────
+  // ── Extract / install ──────────────────────────────────────────────────
   let executablePath = dest;
 
   if (platform === "linux") {
@@ -161,6 +161,56 @@ async function main() {
       }
     } catch (e) {
       console.error(`[download] ⚠️ Extraction failed: ${e.message}`);
+    }
+  } else {
+    // Windows: run the Squirrel/NSIS installer silently, then find the installed Electron binary
+    console.log(`[download] Installing ${filename} silently...`);
+    const installResult = spawnSync(
+      "powershell",
+      ["-NoProfile", "-Command", `Start-Process -FilePath '${dest}' -ArgumentList '/S' -Wait`],
+      { encoding: "utf8", timeout: 120_000 }
+    );
+    if (installResult.status !== 0) {
+      console.warn(`[download] ⚠️ Installer exited with status ${installResult.status} — may still have succeeded`);
+      if (installResult.stderr) console.warn(installResult.stderr);
+    }
+
+    // Search %LOCALAPPDATA% for the installed Electron binary.
+    // Squirrel installs to %LOCALAPPDATA%\<AppName>\app-<version>\<AppName>.exe
+    // Try both "SeedDev" (dev build) and "Seed" (release build).
+    const localAppData = process.env.LOCALAPPDATA || `C:\\Users\\${process.env.USERNAME}\\AppData\\Local`;
+    const appNames = ["SeedDev", "Seed"];
+    let foundBinary = null;
+
+    for (const appName of appNames) {
+      const appDir = join(localAppData, appName);
+      if (!existsSync(appDir)) continue;
+
+      // Find the highest-versioned app-* subdirectory
+      const { readdirSync } = await import("fs");
+      const entries = readdirSync(appDir, { withFileTypes: true });
+      const appDirs = entries
+        .filter(e => e.isDirectory() && e.name.startsWith("app-"))
+        .map(e => e.name)
+        .sort()
+        .reverse(); // highest version first
+
+      for (const dir of appDirs) {
+        const candidate = join(appDir, dir, `${appName}.exe`);
+        if (existsSync(candidate)) {
+          foundBinary = candidate;
+          console.log(`[download] ✅ Found installed binary: ${candidate}`);
+          break;
+        }
+      }
+      if (foundBinary) break;
+    }
+
+    if (foundBinary) {
+      executablePath = foundBinary;
+    } else {
+      console.warn(`[download] ⚠️ Could not find installed Electron binary in %LOCALAPPDATA% — desktop tests will fail`);
+      console.warn(`[download]    Searched: ${appNames.map(n => join(localAppData, n)).join(", ")}`);
     }
   }
 

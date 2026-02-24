@@ -33,13 +33,13 @@ Each bot **must** identify its platform clearly. Use the values below exactly:
 
 | Platform | Label in message |
 |---|---|
-| Windows | `🪟 Windows` |
-| Linux | `🐧 Linux` |
-| macOS | `🍎 macOS` |
+| Windows | `Windows` |
+| Linux | `Linux` |
+| macOS | `macOS` |
 
 Example output:
 ```
-✅ **Seed QA — v2026.2.6-dev.3 (🪟 Windows)**
+✅ **Seed QA — v2026.2.6-dev.3 (Windows)**
 
 🖥️ Desktop: 7/7 | 🌐 Chrome: 14/14 | 🦊 Firefox: 14/14
 

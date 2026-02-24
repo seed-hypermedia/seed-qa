@@ -29,6 +29,16 @@ export async function launchApp(): Promise<AppContext> {
     );
   }
 
+  // On Windows: kill any existing SeedDev instance before launching.
+  // The app uses a single-instance lock and will exit immediately if another copy is running.
+  if (process.platform === "win32") {
+    const { spawnSync } = await import("child_process");
+    const appName = executablePath.split("\\").pop()?.replace(".exe", "") || "SeedDev";
+    spawnSync("taskkill", ["/F", "/IM", `${appName}.exe`], { encoding: "utf8" });
+    // Brief pause to let the OS release the lock
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
   console.log(`[helpers] Launching: ${executablePath}`);
 
   const app = await electron.launch({
