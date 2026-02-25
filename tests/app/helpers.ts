@@ -90,8 +90,22 @@ function getSeedDataBackupDir(): string {
   return join(homedir(), ".config", "Seed-dev-qa-backup");
 }
 
-/** Items within the Seed data dir that constitute "account identity" */
-const IDENTITY_ITEMS = ["SecureStore.json", "daemon"];
+/** Items within the Seed data dir that constitute "account identity" and app state.
+ *  On Linux: ~/.config/Seed-dev/  |  On Windows: %APPDATA%\Seed-dev\
+ *  Logs, GPUCache, Code Cache etc. are intentionally omitted.
+ */
+const IDENTITY_ITEMS = [
+  "SecureStore.json",
+  "daemon",
+  "AppStore.json",
+  "Local Storage",
+  "Session Storage",
+  "IndexedDB",
+  "blob_storage",
+  "Cookies",
+  "Cookies-journal",
+  "Network Persistent State",
+];
 
 export function resetForFreshLaunch(): void {
   const dataDir = getSeedDataDir();
