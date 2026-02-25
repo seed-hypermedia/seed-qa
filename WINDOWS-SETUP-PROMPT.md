@@ -73,7 +73,7 @@ GITHUB_REPO=seed-hypermedia/seed
 # Classic token, public_repo scope, account: seed-germinator
 
 ## Discord
-DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/1475503882632429630/EjkK7Lac62_zsi9U_7Zqfkm4g04bHJ9wwvWv4iipaK3LjeD7hvI7RykU5dJAH7hoVFfS
+DISCORD_WEBHOOK_URL=PASTE_WEBHOOK_URL_HERE
 ```
 
 **Replace `PASTE_TOKEN_HERE`** with the seed-germinator GitHub token (ask Horacio if you don't have it).
@@ -139,7 +139,7 @@ node scripts/check-new-release.mjs
 # 3. Test Discord notification
 node -e "
 const https = require('https');
-const url = new URL('https://discord.com/api/webhooks/1475503882632429630/EjkK7Lac62_zsi9U_7Zqfkm4g04bHJ9wwvWv4iipaK3LjeD7hvI7RykU5dJAH7hoVFfS');
+const url = new URL(process.env.DISCORD_WEBHOOK_URL);
 const body = JSON.stringify({content:'🌱 Sprout (Windows) online — setup verified!', username:'Sprout QA 🌱'});
 const req = https.request({hostname:url.hostname,path:url.pathname,method:'POST',headers:{'Content-Type':'application/json','Content-Length':Buffer.byteLength(body)}},(r)=>{r.resume();console.log('HTTP',r.statusCode);});
 req.write(body);req.end();
