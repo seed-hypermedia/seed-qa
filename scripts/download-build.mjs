@@ -77,7 +77,7 @@ function extractDeb(debPath, extractDir) {
   // Search for the main binary: prefer usr/bin/, then usr/lib/*/<AppName>, then opt/*/
   const findResult = spawnSync("bash", [
     "-c",
-    `find "${extractDir}/usr/bin" -type f 2>/dev/null | head -1 || ` +
+    `find -L "${extractDir}/usr/bin" -type f 2>/dev/null | head -1 || ` +
     `find "${extractDir}/usr/lib" -maxdepth 2 -type f ! -name "*.so*" ! -name "*.pak" ! -name "*.dat" ! -name "*.html" ! -name "*.bin" ! -name "*.json" ! -name "version" -executable 2>/dev/null | grep -v crashpad | grep -v sandbox | head -1 || ` +
     `find "${extractDir}/opt" -maxdepth 3 -type f -executable 2>/dev/null | head -1`,
   ], { encoding: "utf8" });
