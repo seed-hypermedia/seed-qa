@@ -3,6 +3,7 @@ import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import https from "https";
+import { spawnSync } from "child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, "..");
@@ -34,6 +35,10 @@ async function main() {
   const latest = JSON.parse(resp.data);
   const latestVersion = latest.version || latest.tag_name || latest.name || "unknown";
 
+  // Get current seed-qa git commit hash
+  const gitResult = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8", cwd: ROOT });
+  const currentQaCommit = (gitResult.stdout || "").trim();
+
   if (!existsSync(LAST_TESTED_PATH)) {
     console.log(`NEW: ${latestVersion} (no prior test record)`);
     process.stdout.write(latestVersion);
@@ -41,12 +46,20 @@ async function main() {
   }
 
   const lastTested = JSON.parse(readFileSync(LAST_TESTED_PATH, "utf-8"));
-  if (lastTested.version === latestVersion) {
-    process.stderr.write(`SAME: ${latestVersion} already tested at ${lastTested.testedAt}\n`);
+
+  const versionSame = lastTested.version === latestVersion;
+  const commitSame = currentQaCommit && lastTested.qaCommit === currentQaCommit;
+
+  if (versionSame && commitSame) {
+    process.stderr.write(`SAME: ${latestVersion} (qaCommit: ${currentQaCommit.slice(0, 7)}) already tested at ${lastTested.testedAt}\n`);
     process.exit(1);
   }
 
-  console.log(`NEW: ${latestVersion} (last tested: ${lastTested.version})`);
+  if (!versionSame) {
+    console.log(`NEW build: ${latestVersion} (last tested: ${lastTested.version})`);
+  } else {
+    console.log(`NEW qa commit: ${currentQaCommit.slice(0, 7)} (version: ${latestVersion} unchanged)`);
+  }
   process.stdout.write(latestVersion);
   process.exit(0);
 }

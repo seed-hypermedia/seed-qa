@@ -157,9 +157,13 @@ async function main() {
   header("📣 Discord...");
   runCmd("node scripts/discord-notify.mjs");
 
+  // Get current seed-qa git commit hash for change detection
+  const gitResult = spawnSync("git", ["rev-parse", "HEAD"], { encoding: "utf8", cwd: PROJECT_ROOT });
+  const qaCommit = (gitResult.stdout || "").trim();
+
   writeFileSync(
     join(PROJECT_ROOT, "reports", "last-tested.json"),
-    JSON.stringify({ version, testedAt: finishedAt }, null, 2)
+    JSON.stringify({ version, qaCommit, testedAt: finishedAt }, null, 2)
   );
 
   header("📊 Final Summary");
