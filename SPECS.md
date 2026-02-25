@@ -66,6 +66,16 @@ Tested after a 5-second wait to let the app settle.
 
 ---
 
+## Desktop — Fresh Launch (Keychain Reset)
+These tests reset the account identity before launching to simulate a brand-new install.
+
+| ID    | Description |
+|-------|-------------|
+| D4-01 | On a fresh launch (account identity deleted), the app must show an onboarding prompt (create / new account / welcome / get started / recovery / setup) |
+| D4-02 | On a fresh launch, no crash dialogs or error overlays must be visible |
+
+---
+
 ### Web — Comment URL Routing
 
 | ID | Description |

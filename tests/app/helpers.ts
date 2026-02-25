@@ -1,6 +1,7 @@
 import { _electron as electron } from "playwright";
 import { join } from "path";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, cpSync, rmSync, mkdirSync } from "fs";
+import { homedir } from "os";
 import type { ElectronApplication, Page } from "playwright";
 
 // Use process.cwd() — Playwright always runs from the project root
@@ -71,4 +72,59 @@ export async function launchApp(): Promise<AppContext> {
 
 export async function closeApp(ctx: AppContext) {
   await ctx.app.close().catch(() => {});
+}
+
+// ── Keychain reset helpers ────────────────────────────────────────────────────
+
+function getSeedDataDir(): string {
+  if (process.platform === "win32") {
+    return join(process.env.APPDATA || join(homedir(), "AppData", "Roaming"), "Seed-dev");
+  }
+  return join(homedir(), ".config", "Seed-dev");
+}
+
+function getSeedDataBackupDir(): string {
+  if (process.platform === "win32") {
+    return join(process.env.APPDATA || join(homedir(), "AppData", "Roaming"), "Seed-dev-qa-backup");
+  }
+  return join(homedir(), ".config", "Seed-dev-qa-backup");
+}
+
+/** Items within the Seed data dir that constitute "account identity" */
+const IDENTITY_ITEMS = ["SecureStore.json", "daemon"];
+
+export function resetForFreshLaunch(): void {
+  const dataDir = getSeedDataDir();
+  const backupDir = getSeedDataBackupDir();
+
+  // Remove any stale backup
+  rmSync(backupDir, { recursive: true, force: true });
+  mkdirSync(backupDir, { recursive: true });
+
+  for (const item of IDENTITY_ITEMS) {
+    const src = join(dataDir, item);
+    const dest = join(backupDir, item);
+    if (existsSync(src)) {
+      cpSync(src, dest, { recursive: true });
+      rmSync(src, { recursive: true, force: true });
+    }
+  }
+  console.log("[helpers] Keychain reset: identity items backed up and removed.");
+}
+
+export function restoreAfterFreshLaunch(): void {
+  const dataDir = getSeedDataDir();
+  const backupDir = getSeedDataBackupDir();
+
+  for (const item of IDENTITY_ITEMS) {
+    const src = join(backupDir, item);
+    const dest = join(dataDir, item);
+    if (existsSync(src)) {
+      // Remove any data created during the fresh-launch test
+      rmSync(dest, { recursive: true, force: true });
+      cpSync(src, dest, { recursive: true });
+    }
+  }
+  rmSync(backupDir, { recursive: true, force: true });
+  console.log("[helpers] Keychain restored from backup.");
 }
