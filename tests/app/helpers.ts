@@ -108,32 +108,59 @@ const IDENTITY_ITEMS = [
   "Network Persistent State",
 ];
 
-// Path to the Python keychain helper script (relative to project root)
-const KEYCHAIN_SCRIPT = join(process.cwd(), "scripts", "keychain-reset.py");
+// Path to the Python keychain helper scripts (relative to project root)
+const KEYCHAIN_SCRIPT_LINUX   = join(process.cwd(), "scripts", "keychain-reset.py");
+const KEYCHAIN_SCRIPT_WINDOWS = join(process.cwd(), "scripts", "keychain-reset-win.py");
 
-/** Back up and clear Seed account keys stored in the system keychain (Linux: GNOME keyring). */
+/** Back up and clear Seed account keys stored in the system keychain.
+ *  Linux: GNOME keyring (secretstorage)
+ *  Windows: Windows Credential Manager (Win32 CredReadW/CredDeleteW via ctypes)
+ */
 function backupAndClearSystemKeychain(backupDir: string): void {
-  if (process.platform !== "linux") return;
-  if (!existsSync(KEYCHAIN_SCRIPT)) {
-    console.warn("[helpers] keychain-reset.py not found, skipping keychain clear.");
-    return;
-  }
-  const result = spawnSync("python3", [KEYCHAIN_SCRIPT, "backup", backupDir], { encoding: "utf8" });
-  if (result.stdout) console.log(result.stdout.trim());
-  if (result.stderr) console.warn("[helpers] keychain backup stderr:", result.stderr.trim());
+  if (process.platform === "linux") {
+    if (!existsSync(KEYCHAIN_SCRIPT_LINUX)) {
+      console.warn("[helpers] keychain-reset.py not found, skipping keychain clear.");
+      return;
+    }
+    const result = spawnSync("python3", [KEYCHAIN_SCRIPT_LINUX, "backup", backupDir], { encoding: "utf8" });
+    if (result.stdout) console.log(result.stdout.trim());
+    if (result.stderr) console.warn("[helpers] keychain backup stderr:", result.stderr.trim());
 
-  const clearResult = spawnSync("python3", [KEYCHAIN_SCRIPT, "clear"], { encoding: "utf8" });
-  if (clearResult.stdout) console.log(clearResult.stdout.trim());
-  if (clearResult.stderr) console.warn("[helpers] keychain clear stderr:", clearResult.stderr.trim());
+    const clearResult = spawnSync("python3", [KEYCHAIN_SCRIPT_LINUX, "clear"], { encoding: "utf8" });
+    if (clearResult.stdout) console.log(clearResult.stdout.trim());
+    if (clearResult.stderr) console.warn("[helpers] keychain clear stderr:", clearResult.stderr.trim());
+
+  } else if (process.platform === "win32") {
+    if (!existsSync(KEYCHAIN_SCRIPT_WINDOWS)) {
+      console.warn("[helpers] keychain-reset-win.py not found, skipping keychain clear.");
+      return;
+    }
+    const result = spawnSync("python", [KEYCHAIN_SCRIPT_WINDOWS, "backup", backupDir], { encoding: "utf8" });
+    if (result.stdout) console.log(result.stdout.trim());
+    if (result.stderr) console.warn("[helpers] keychain-win backup stderr:", result.stderr.trim());
+
+    const clearResult = spawnSync("python", [KEYCHAIN_SCRIPT_WINDOWS, "clear"], { encoding: "utf8" });
+    if (clearResult.stdout) console.log(clearResult.stdout.trim());
+    if (clearResult.stderr) console.warn("[helpers] keychain-win clear stderr:", clearResult.stderr.trim());
+  }
 }
 
-/** Restore Seed account keys back into the system keychain from a previous backup. */
+/** Restore Seed account keys back into the system keychain from a previous backup.
+ *  Linux: GNOME keyring  |  Windows: Windows Credential Manager
+ */
 function restoreSystemKeychain(backupDir: string): void {
-  if (process.platform !== "linux") return;
-  if (!existsSync(KEYCHAIN_SCRIPT)) return;
-  const result = spawnSync("python3", [KEYCHAIN_SCRIPT, "restore", backupDir], { encoding: "utf8" });
-  if (result.stdout) console.log(result.stdout.trim());
-  if (result.stderr) console.warn("[helpers] keychain restore stderr:", result.stderr.trim());
+  if (process.platform === "linux") {
+    if (!existsSync(KEYCHAIN_SCRIPT_LINUX)) return;
+    const result = spawnSync("python3", [KEYCHAIN_SCRIPT_LINUX, "restore", backupDir], { encoding: "utf8" });
+    if (result.stdout) console.log(result.stdout.trim());
+    if (result.stderr) console.warn("[helpers] keychain restore stderr:", result.stderr.trim());
+
+  } else if (process.platform === "win32") {
+    if (!existsSync(KEYCHAIN_SCRIPT_WINDOWS)) return;
+    const result = spawnSync("python", [KEYCHAIN_SCRIPT_WINDOWS, "restore", backupDir], { encoding: "utf8" });
+    if (result.stdout) console.log(result.stdout.trim());
+    if (result.stderr) console.warn("[helpers] keychain-win restore stderr:", result.stderr.trim());
+  }
 }
 
 export function resetForFreshLaunch(): void {
