@@ -2,6 +2,7 @@ import { _electron as electron } from "playwright";
 import { join } from "path";
 import { readFileSync, existsSync, cpSync, rmSync, mkdirSync } from "fs";
 import { homedir } from "os";
+import { spawnSync } from "child_process";
 import type { ElectronApplication, Page } from "playwright";
 
 // Use process.cwd() — Playwright always runs from the project root
@@ -107,6 +108,34 @@ const IDENTITY_ITEMS = [
   "Network Persistent State",
 ];
 
+// Path to the Python keychain helper script (relative to project root)
+const KEYCHAIN_SCRIPT = join(process.cwd(), "scripts", "keychain-reset.py");
+
+/** Back up and clear Seed account keys stored in the system keychain (Linux: GNOME keyring). */
+function backupAndClearSystemKeychain(backupDir: string): void {
+  if (process.platform !== "linux") return;
+  if (!existsSync(KEYCHAIN_SCRIPT)) {
+    console.warn("[helpers] keychain-reset.py not found, skipping keychain clear.");
+    return;
+  }
+  const result = spawnSync("python3", [KEYCHAIN_SCRIPT, "backup", backupDir], { encoding: "utf8" });
+  if (result.stdout) console.log(result.stdout.trim());
+  if (result.stderr) console.warn("[helpers] keychain backup stderr:", result.stderr.trim());
+
+  const clearResult = spawnSync("python3", [KEYCHAIN_SCRIPT, "clear"], { encoding: "utf8" });
+  if (clearResult.stdout) console.log(clearResult.stdout.trim());
+  if (clearResult.stderr) console.warn("[helpers] keychain clear stderr:", clearResult.stderr.trim());
+}
+
+/** Restore Seed account keys back into the system keychain from a previous backup. */
+function restoreSystemKeychain(backupDir: string): void {
+  if (process.platform !== "linux") return;
+  if (!existsSync(KEYCHAIN_SCRIPT)) return;
+  const result = spawnSync("python3", [KEYCHAIN_SCRIPT, "restore", backupDir], { encoding: "utf8" });
+  if (result.stdout) console.log(result.stdout.trim());
+  if (result.stderr) console.warn("[helpers] keychain restore stderr:", result.stderr.trim());
+}
+
 export function resetForFreshLaunch(): void {
   const dataDir = getSeedDataDir();
   const backupDir = getSeedDataBackupDir();
@@ -123,6 +152,12 @@ export function resetForFreshLaunch(): void {
       rmSync(src, { recursive: true, force: true });
     }
   }
+
+  // Also clear account keys from the system keychain (Linux: GNOME keyring).
+  // The daemon reads keys from libsecret at startup, bypassing the file-based reset
+  // above — so we must clear them here and restore them in restoreAfterFreshLaunch().
+  backupAndClearSystemKeychain(backupDir);
+
   console.log("[helpers] Keychain reset: identity items backed up and removed.");
 }
 
@@ -139,6 +174,10 @@ export function restoreAfterFreshLaunch(): void {
       cpSync(src, dest, { recursive: true });
     }
   }
+
+  // Restore account keys back into the system keychain.
+  restoreSystemKeychain(backupDir);
+
   rmSync(backupDir, { recursive: true, force: true });
   console.log("[helpers] Keychain restored from backup.");
 }
