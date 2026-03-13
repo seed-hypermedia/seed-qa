@@ -45,9 +45,11 @@ if (!ghAvailable()) {
   process.exit(0);
 }
 
-const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+// GH_TOKEN_QA is the seed-germinator OAuth token with push access to seed-hypermedia/seed-qa.
+// Fall back to GH_TOKEN / GITHUB_TOKEN if it's not set.
+const token = process.env.GH_TOKEN_QA || process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
 if (!token) {
-  log("No GITHUB_TOKEN / GH_TOKEN set, skipping upload");
+  log("No GH_TOKEN_QA / GH_TOKEN / GITHUB_TOKEN set, skipping upload");
   process.exit(0);
 }
 
