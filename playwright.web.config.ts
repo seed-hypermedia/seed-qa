@@ -7,6 +7,7 @@ export default defineConfig({
   workers: 1,
   reporter: [
     ["list"],
+    ["html", { open: "never", outputFolder: "reports/web-html" }],
     ["json", { outputFile: "reports/web-results.json" }],
   ],
   use: {

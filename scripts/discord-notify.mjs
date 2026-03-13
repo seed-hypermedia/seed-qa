@@ -39,6 +39,7 @@ const {
   web = {},
   issues = {},
   prs = [],
+  reportUrl = null,
 } = summary;
 
 const allPassed = (desktop.failed || 0) === 0 && (web.chrome?.failed || 0) === 0;
@@ -49,15 +50,47 @@ const onlyFirefox =
 const statusEmoji = allPassed ? "✅" : onlyFirefox ? "⚠️" : "❌";
 const platformLabel = platform === "windows" || platform === "win32" ? "Windows" : platform === "linux" ? "Linux" : platform;
 
+// Collect failing test names from JSON results for a brief summary
+function collectFailures(resultsPath) {
+  if (!existsSync(resultsPath)) return [];
+  try {
+    const data = JSON.parse(readFileSync(resultsPath, "utf-8"));
+    const failures = [];
+    function walk(suite) {
+      for (const spec of suite.specs || []) {
+        for (const test of spec.tests || []) {
+          const last = (test.results || []).slice(-1)[0];
+          if (last && last.status !== "passed" && last.status !== "skipped") {
+            failures.push(`• ${spec.title} [${test.projectName || "?"}]`);
+          }
+        }
+      }
+      for (const child of suite.suites || []) walk(child);
+    }
+    (data.suites || []).forEach(walk);
+    return failures;
+  } catch {
+    return [];
+  }
+}
+
+import { join as pathJoin, dirname as pathDirname } from "path";
+const REPORTS_DIR = pathJoin(pathDirname(fileURLToPath(import.meta.url)), "..", "reports");
+const desktopFailures = collectFailures(pathJoin(REPORTS_DIR, "results.json"));
+const webFailures = collectFailures(pathJoin(REPORTS_DIR, "web-results.json"));
+const allFailures = [...desktopFailures, ...webFailures].slice(0, 8); // cap at 8 to avoid wall of text
+
 const lines = [
   `${statusEmoji} **Seed QA — v${version} (${platformLabel})**`,
   ``,
   `🖥️ Desktop: ${desktop.passed || 0}/${desktop.total || 0} | 🌐 Chrome: ${web.chrome?.passed || 0}/${web.chrome?.total || 0} | 🦊 Firefox: ${web.firefox?.passed || 0}/${web.firefox?.total || 0}`,
+  allFailures.length > 0 ? `\n**Failed tests:**\n${allFailures.join("\n")}` : null,
   ``,
   (issues.filed || 0) > 0
     ? `📋 ${issues.filed} new issue(s) filed`
     : `📋 No new issues`,
   prs.length > 0 ? `🔧 ${prs.length} draft PR(s): ${prs.join(", ")}` : null,
+  reportUrl ? `📊 [Full report + artifacts](${reportUrl})` : null,
   ``,
   `⏱️ ${startedAt}`,
 ]

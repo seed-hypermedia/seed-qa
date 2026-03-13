@@ -154,6 +154,9 @@ async function main() {
   header("💾 Saving report...");
   runCmd("node scripts/save-report.mjs");
 
+  header("📤 Uploading report...");
+  runCmd("node scripts/upload-report.mjs");
+
   header("📣 Discord...");
   runCmd("node scripts/discord-notify.mjs");
 
