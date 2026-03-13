@@ -7,7 +7,14 @@
  * anywhere. Writes the release URL back into reports/summary.json so that
  * discord-notify.mjs can embed the link.
  *
- * Requires: gh CLI in PATH and GITHUB_TOKEN env var with repo scope.
+ * Auth: uses GH_TOKEN_QA if set (recommended — seed-germinator OAuth token with
+ * push access to seed-qa). If not set, falls back to gh CLI's own stored
+ * credentials so that machines where `gh auth login` was already run work
+ * automatically after a plain `git pull`, with no extra env var setup needed.
+ *
+ * NOTE: GH_TOKEN and GITHUB_TOKEN are intentionally NOT used as a fallback
+ * because the value typically set in the environment is a weaker PAT
+ * (public_repo only) that cannot create releases on seed-qa.
  */
 import { execSync, spawnSync } from "child_process";
 import { readFileSync, writeFileSync, existsSync } from "fs";
@@ -28,12 +35,29 @@ function ghAvailable() {
   return r.status === 0;
 }
 
-function run(cmd, opts = {}) {
-  log(`▶ ${cmd}`);
-  execSync(cmd, { stdio: "inherit", cwd: PROJECT_ROOT, ...opts });
+/**
+ * Build the env object to pass to gh commands.
+ * If GH_TOKEN_QA is set, use it explicitly.
+ * Otherwise, strip GH_TOKEN and GITHUB_TOKEN so gh falls back to its own
+ * stored credentials (set up via `gh auth login` during machine bootstrap).
+ */
+function ghEnv() {
+  if (process.env.GH_TOKEN_QA) {
+    return { ...process.env, GH_TOKEN: process.env.GH_TOKEN_QA, GITHUB_TOKEN: process.env.GH_TOKEN_QA };
+  }
+  // Use gh's stored auth — remove any weak token overrides from the env
+  const env = { ...process.env };
+  delete env.GH_TOKEN;
+  delete env.GITHUB_TOKEN;
+  return env;
 }
 
-// ── main ─────────────────────────────────────────────────────────────────────
+function run(cmd, opts = {}) {
+  log(`▶ ${cmd}`);
+  execSync(cmd, { stdio: "inherit", cwd: PROJECT_ROOT, env: ghEnv(), ...opts });
+}
+
+// ── preflight: verify gh can authenticate ────────────────────────────────────
 
 if (!existsSync(SUMMARY_PATH)) {
   log("No summary found (reports/summary.json missing), skipping upload");
@@ -45,13 +69,14 @@ if (!ghAvailable()) {
   process.exit(0);
 }
 
-// GH_TOKEN_QA is the seed-germinator OAuth token with push access to seed-hypermedia/seed-qa.
-// Fall back to GH_TOKEN / GITHUB_TOKEN if it's not set.
-const token = process.env.GH_TOKEN_QA || process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
-if (!token) {
-  log("No GH_TOKEN_QA / GH_TOKEN / GITHUB_TOKEN set, skipping upload");
+const authCheck = spawnSync("gh", ["auth", "status"], { encoding: "utf8", env: ghEnv() });
+if (authCheck.status !== 0) {
+  log("gh is not authenticated — skipping upload");
+  log("Run `gh auth login` on this machine or set GH_TOKEN_QA in the environment.");
   process.exit(0);
 }
+
+// ── main ─────────────────────────────────────────────────────────────────────
 
 const summary = JSON.parse(readFileSync(SUMMARY_PATH, "utf8"));
 const { version = "unknown", platform = "unknown", startedAt = "" } = summary;
@@ -82,18 +107,14 @@ run(
   `gh release create ${tag} ${archiveName} \
     --repo ${QA_REPO} \
     --title "Report: ${version} (${platform})" \
-    --notes "${relNotes}"`,
-  { env: { ...process.env, GITHUB_TOKEN: token, GH_TOKEN: token } }
+    --notes "${relNotes}"`
 );
 
 // Read the release URL that gh just created
 const urlResult = spawnSync(
   "gh",
   ["release", "view", tag, "--repo", QA_REPO, "--json", "url", "--jq", ".url"],
-  {
-    encoding: "utf8",
-    env: { ...process.env, GITHUB_TOKEN: token, GH_TOKEN: token },
-  }
+  { encoding: "utf8", env: ghEnv() }
 );
 const releaseUrl = (urlResult.stdout || "").trim();
 

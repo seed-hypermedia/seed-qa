@@ -101,6 +101,27 @@ For `GITHUB_TOKEN`: generate a PAT at https://github.com/settings/tokens with `p
 
 For `DISCORD_WEBHOOK_URL`: create a webhook in your Discord channel settings → Integrations → Webhooks.
 
+### GitHub CLI auth (required for report uploads)
+
+The report upload script (`upload-report.mjs`) uses `gh` to create GitHub Releases on
+`seed-hypermedia/seed-qa`. Authenticate once and it works on every future `git pull`:
+
+```powershell
+gh auth login
+# → GitHub.com → HTTPS → Login with a web browser (or paste token)
+```
+
+Verify with:
+```powershell
+gh auth status
+```
+
+**Optional:** If you'd rather use an explicit token instead of browser auth, add this to `SECRETS.md`:
+```markdown
+GH_TOKEN_QA=gho_your_seed_germinator_oauth_token
+```
+The script prefers `GH_TOKEN_QA` when set, otherwise falls back to `gh`'s stored credentials.
+
 ---
 
 ## 4. Configure OpenClaw (Discord + agent identity)
